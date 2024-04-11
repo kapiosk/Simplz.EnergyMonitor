@@ -1,6 +1,11 @@
 ## Installation
 
-Create Service energymonitor.service
+Create service
+
+
+```bash
+sudo nano /etc/systemd/system/energymonitor.service
+```
 
 ```bash
 [Unit]
@@ -23,4 +28,16 @@ Environment=INFLUXDB_DATABASE=
 
 [Install]
 WantedBy=default.target
+```
+
+Enable service
+
+```bash
+sudo systemctl enable energymonitor.service
+```
+
+Start service
+
+```bash
+sudo systemctl start energymonitor.service
 ```
