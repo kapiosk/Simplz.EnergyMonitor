@@ -1,5 +1,5 @@
-﻿using Cronos;
-using TapoConnect;
+﻿using Simplz.EnergyMonitor.Services;
+using Simplz.EnergyMonitor.Utilities;
 
 DotNetEnv.Env.Load();
 
@@ -8,16 +8,11 @@ var email = Environment.GetEnvironmentVariable("TAPO_EMAIL") ?? throw new Invali
 var password = Environment.GetEnvironmentVariable("TAPO_PASSWORD") ?? throw new InvalidOperationException("Environment variable PASSWORD is not set.");
 var energyMonitorCron = Environment.GetEnvironmentVariable("ENERGY_MONITOR_CRON");
 
-TapoDeviceClient deviceClient = new([new TapoConnect.Protocol.KlapDeviceClient()]);
-List<TapoDeviceKey> tapoDeviceKeys = [];
-foreach (var ip in ips.Split(','))
-{
-    tapoDeviceKeys.Add(await deviceClient.LoginByIpAsync(ip, email, password));
-}
+TapoService tapoService = await TapoService.CreateServiceAsync(ips, email, password);
 
 if (string.IsNullOrEmpty(energyMonitorCron))
 {
-    var items = await ProcessItems(deviceClient, tapoDeviceKeys);
+    var items = await tapoService.ReadDeviceInfoAsync();
     foreach (var item in items)
     {
         Console.WriteLine($"{item.Nickname} - {item.CurrentPower}w - {item.LocalTime}");
@@ -28,40 +23,10 @@ else
     PerioticCronTimer perioticCronTimer = new(energyMonitorCron);
     while (await perioticCronTimer.WaitForNextTickAsync())
     {
-        var items = await ProcessItems(deviceClient, tapoDeviceKeys);
+        var items = await tapoService.ReadDeviceInfoAsync();
         foreach (var item in items)
         {
             Console.WriteLine($"{item.Nickname} - {item.CurrentPower}w - {item.LocalTime}");
         }
-    }
-}
-
-static async Task<List<TapoDeviceResponse>> ProcessItems(TapoDeviceClient deviceClient, List<TapoDeviceKey> tapoDeviceKeys)
-{
-    List<TapoDeviceResponse> tapoDeviceResponses = [];
-    foreach (var tapoDeviceKey in tapoDeviceKeys)
-    {
-        var energyUsageResult = await deviceClient.GetEnergyUsageAsync(tapoDeviceKey);
-        var deviceGetInfoResult = await deviceClient.GetDeviceInfoAsync(tapoDeviceKey);
-        tapoDeviceResponses.Add(new(deviceGetInfoResult.Nickname, energyUsageResult.CurrentPower / 1000, energyUsageResult.LocalTime));
-    }
-    return tapoDeviceResponses;
-}
-
-record TapoDeviceResponse(string Nickname, float CurrentPower, DateTime LocalTime);
-
-class PerioticCronTimer(string cronExpression)
-{
-    private readonly CronExpression _expression = CronExpression.Parse(cronExpression, CronFormat.IncludeSeconds);
-
-    public async ValueTask<bool> WaitForNextTickAsync(CancellationToken cancellationToken = default)
-    {
-        DateTime? nextUtc = _expression.GetNextOccurrence(DateTime.UtcNow, true);
-        if (nextUtc.HasValue)
-        {
-            await Task.Delay(nextUtc.Value - DateTime.UtcNow, cancellationToken);
-            return true;
-        }
-        return false;
     }
 }
