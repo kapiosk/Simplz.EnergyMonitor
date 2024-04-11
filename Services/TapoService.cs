@@ -13,6 +13,17 @@ internal sealed class TapoService
         _tapoDeviceKeys = tapoDeviceKeys;
     }
 
+    internal static Task<TapoService> CreateServiceAsync()
+    {
+        var ips = Environment.GetEnvironmentVariable("TAPO_IPS")
+            ?? throw new InvalidOperationException("Environment variable TAPO_IPS is not set.");
+        var email = Environment.GetEnvironmentVariable("TAPO_EMAIL")
+            ?? throw new InvalidOperationException("Environment variable TAPO_EMAIL is not set.");
+        var password = Environment.GetEnvironmentVariable("TAPO_PASSWORD")
+            ?? throw new InvalidOperationException("Environment variable TAPO_PASSWORD is not set.");
+        return CreateServiceAsync(ips, email, password);
+    }
+
     internal static async Task<TapoService> CreateServiceAsync(string ips, string email, string password)
     {
         TapoConnect.TapoDeviceClient deviceClient = new([new TapoConnect.Protocol.KlapDeviceClient()]);

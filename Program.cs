@@ -3,19 +3,17 @@ using Simplz.EnergyMonitor.Utilities;
 
 DotNetEnv.Env.Load();
 
-var ips = Environment.GetEnvironmentVariable("TAPO_IPS") ?? throw new InvalidOperationException("Environment variable IP is not set.");
-var email = Environment.GetEnvironmentVariable("TAPO_EMAIL") ?? throw new InvalidOperationException("Environment variable EMAIL is not set.");
-var password = Environment.GetEnvironmentVariable("TAPO_PASSWORD") ?? throw new InvalidOperationException("Environment variable PASSWORD is not set.");
-var energyMonitorCron = Environment.GetEnvironmentVariable("ENERGY_MONITOR_CRON");
+var energyMonitorCron = Environment.GetEnvironmentVariable("ENERGY_MONITOR_CRON"); // ?? "0/5 * * * * *"
 
-TapoService tapoService = await TapoService.CreateServiceAsync(ips, email, password);
+TapoService tapoService = await TapoService.CreateServiceAsync();
+using InfluxDBService influxDBService = InfluxDBService.CreateService();
 
 if (string.IsNullOrEmpty(energyMonitorCron))
 {
     var items = await tapoService.ReadDeviceInfoAsync();
     foreach (var item in items)
     {
-        Console.WriteLine($"{item.Nickname} - {item.CurrentPower}w - {item.LocalTime}");
+        await influxDBService.WriteDataAsync("energy", item.Nickname, item.CurrentPower, item.LocalTime);
     }
 }
 else
@@ -26,7 +24,7 @@ else
         var items = await tapoService.ReadDeviceInfoAsync();
         foreach (var item in items)
         {
-            Console.WriteLine($"{item.Nickname} - {item.CurrentPower}w - {item.LocalTime}");
+            await influxDBService.WriteDataAsync("energy", item.Nickname, item.CurrentPower, item.LocalTime);
         }
     }
 }
