@@ -4,7 +4,7 @@ using Simplz.EnergyMonitor.Utilities;
 DotNetEnv.Env.Load();
 
 CancellationTokenSource cts = new();
-cts.CancelAfter(TimeSpan.FromSeconds(5));
+cts.CancelAfter(TimeSpan.FromMinutes(1));
 
 var energyMonitorCron = Environment.GetEnvironmentVariable("ENERGY_MONITOR_CRON"); // ?? "0/5 * * * * *"
 
