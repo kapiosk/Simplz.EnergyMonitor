@@ -30,7 +30,14 @@ internal sealed class TapoService
         List<TapoConnect.TapoDeviceKey> tapoDeviceKeys = [];
         foreach (var ip in ips.Split(','))
         {
-            tapoDeviceKeys.Add(await deviceClient.LoginByIpAsync(ip, email, password));
+            try
+            {
+                tapoDeviceKeys.Add(await deviceClient.LoginByIpAsync(ip, email, password));
+            }
+            catch
+            {
+
+            }
         }
         return new TapoService(deviceClient, tapoDeviceKeys);
     }
