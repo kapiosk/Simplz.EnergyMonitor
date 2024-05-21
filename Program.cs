@@ -16,7 +16,13 @@ if (string.IsNullOrEmpty(energyMonitorCron))
     var items = await tapoService.ReadDeviceInfoAsync();
     foreach (var item in items)
     {
-        await influxDBService.WriteDataAsync("energy", item.Nickname, item.CurrentPower, item.LocalTime, cts.Token);
+        try
+        {
+            await influxDBService.WriteDataAsync("energy", item.Nickname, item.CurrentPower, item.LocalTime, cts.Token);
+        }
+        catch
+        {
+        }
     }
 }
 else
@@ -27,7 +33,13 @@ else
         var items = await tapoService.ReadDeviceInfoAsync();
         foreach (var item in items)
         {
-            await influxDBService.WriteDataAsync("energy", item.Nickname, item.CurrentPower, item.LocalTime, cts.Token);
+            try
+            {
+                await influxDBService.WriteDataAsync("energy", item.Nickname, item.CurrentPower, item.LocalTime, cts.Token);
+            }
+            catch
+            {
+            }
         }
     }
 }
